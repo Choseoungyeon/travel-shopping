@@ -1,0 +1,67 @@
+.Container{
+    width:75%; 
+    margin: 0 auto;
+}
+
+.Container h2{
+    text-align: center;
+}
+
+.CardContainer{
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+}
+
+.Card{
+    width:24%;
+    background-color: rgb(247, 247, 247);
+    padding: 10px 10px 30px;
+    border-radius: 5px;
+    margin-bottom: 1rem;
+}
+
+.Card h3{
+    font-size: 15px;
+    margin-top: 20px;
+}
+
+.Card p{
+    font-size: 14px;
+    color: rgb(90, 90, 90);
+    margin-top: 15px;
+}
+
+.cardImage{
+    width:100%;
+    height: auto;
+    overflow: hidden;
+    max-height: 250px;
+    cursor: pointer;
+}
+
+.cardImage img{
+    width:100%;
+}
+
+.slick-dots{
+    bottom: 10px;
+}
+
+.slick-dots li {
+    width:15px;
+    height: 15px;
+}
+
+.slick-dots li button:before{
+    color:#fff;
+}
+.slick-dots li.slick-active button:before {
+    color: #fff;
+}
+
+@media screen and (max-width:1300px){
+    .Card{
+        width: 32%;
+    }
+}

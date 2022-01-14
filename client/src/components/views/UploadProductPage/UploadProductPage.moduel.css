@@ -1,0 +1,44 @@
+form{
+    padding: 0px 20px;
+    width:100%;
+}
+
+h2{
+    margin-top: 100px;
+    margin-bottom: 40px;
+}
+
+label{
+    display: block;
+    margin-bottom: 8px;
+}
+
+textarea{
+    width:100%;
+    border: 1px solid lightgray;
+    margin-bottom: 30px;
+    border-radius: 5px;
+    height: 60px;
+}
+
+input{
+    width:100%;
+    display: block;
+    border: 1px solid lightgray;
+    margin-bottom: 30px;
+    border-radius: 5px;
+    height: 35px;
+}
+
+.test{
+    margin-bottom: 30px;
+    border-radius: 5px;
+    border: 1px solid lightgray;
+    font-weight: normal;
+    font-size: 15px;
+    width:150px;
+}
+
+option{
+    font-size: 12px;
+}
