@@ -1,13 +1,17 @@
 import { useEffect, useState } from 'react'
+import { Link }from "react-router-dom"
 import axios from 'axios'
 import React from 'react'
 import Slider from 'react-slick'
 import CheckBox from './Section/CheckBox'
-import {continets} from './Section/Data'
+import {continents, price} from './Section/Data'
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import './LandingPage.moduel.css'
-
+import RadioBox from './Section/RadioBox'
+import Search from './Section/Search'
+import 'bootstrap/dist/css/bootstrap.min.css';
+import {Container, Row, Col, Button} from 'react-bootstrap';
 
 function LandingPage() {
 
@@ -15,6 +19,11 @@ function LandingPage() {
     const [Skip, setSkip] = useState(0)
     const [Limit, setLimit] = useState(8)
     const [PostSize, setPostSize] = useState(0)
+    const [Filters, setFilters] = useState([{
+        continents : [],
+        price: []
+    }])
+    const [SearchTerm, setSearchTerm] = useState("")
 
     const getProducts = (body) =>{
         axios.post('/api/product/products', body)
@@ -63,6 +72,57 @@ function LandingPage() {
         infinite: true,
       };
 
+    const showFilteredResults = (filters) =>{
+        let body = {
+            skip:0,
+            limit:Limit,
+            filters:filters
+        }
+
+        getProducts(body)
+        setSkip(0)
+    }
+
+    const handlePrice = (value)=>{
+        const data = price;
+        let array = [];
+
+        for(let key in data) {
+            if(data[key]._id === parseInt(value, 10)){
+                array = data[key].array
+            }
+        }
+
+        return array;
+    }
+
+    const handleFilters= (filters, cateogory)=>{
+        const newFilters = {...Filters}
+
+        newFilters[cateogory] = filters
+        
+        if(cateogory === "price"){
+            let priceValue = handlePrice(filters)
+            newFilters[cateogory] = priceValue
+        }
+
+        showFilteredResults(newFilters)
+        setFilters(newFilters)
+    }
+
+    const updateSearchTerm = (newSearchTerm)=>{
+        let body={
+            skip:0,
+            limit:Limit,
+            filters:Filters,
+            searchTerm : newSearchTerm
+        }
+
+        setSkip(0)
+        setSearchTerm(newSearchTerm)
+        getProducts(body)
+    }
+
 
     return (
         <div className='Container' >
@@ -71,17 +131,26 @@ function LandingPage() {
             </div>
 
             {/* Filter */}
-            <CheckBox list={continets} />
-
+            <Container>
+                <Row>
+                    <Col><CheckBox list={continents} handleFilters={filters => handleFilters(filters, "continents")} /></Col>
+                    <Col><RadioBox list={price} handleFilters={filters => handleFilters(filters,"price")}/></Col>
+                </Row>
+                <Row>
+                    <Col md={{ span: 5, offset: 7 }}><Search refreshFunction ={updateSearchTerm}/></Col>
+                </Row>
+            </Container>
             <div className='CardContainer'>
                 {Products.map((product, index) => (
                     <div className="Card" key={index}>
                         <div className='cardImage'>
                             <Slider {...settings}>
                                 {product.images.map((productImage, index) => (
-                                    <div key={index}>
-                                        <img src={`http://localhost:5000/${productImage}`} />
-                                    </div>
+                                    <Link to={`/product/${product._id}`} key={index}>
+                                        <div>
+                                            <img src={productImage.path} />
+                                        </div>
+                                    </Link>
                                 ))}
                             </Slider>
                         </div>
@@ -92,7 +161,7 @@ function LandingPage() {
             </div>
             {PostSize >= Limit &&
                 <div style={{ display: 'flex', justifyContent: 'center', marginTop: '50px', marginBottom: '50px' }}>
-                    <button onClick={loadMoreHandler}>더보기</button>
+                    <Button onClick={loadMoreHandler} variant="outline-secondary">더보기</Button>
                 </div>
             }
             

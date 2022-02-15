@@ -1,13 +1,14 @@
 const express = require('express')
 const app = express()
-const port = 5000
+const port = process.env.PORT || 5000
 const bodyParser = require('body-parser')
 const cookieParser = require('cookie-parser')
 const {User} = require("./models/User")
 const {Product} = require('./models/Product')
 const {auth} = require("./middleware/auth")
+const cloudinary = require("cloudinary").v2;
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const multer = require('multer');
-const fs = require('fs').promises;
 
 const confing = require("./config/dev")
 
@@ -78,7 +79,9 @@ app.get('/api/users/auth', auth, (req,res)=>{
     name:req.user.name,
     lastname:req.user.lastname,
     role:req.user.role,
-    image:req.user.image
+    image:req.user.image,
+    cart:req.user.cart,
+    history:req.user.history
   })
 })
 
@@ -100,54 +103,245 @@ app.post('/api/product', (req, res)=>{
     if(err) return res.status(400).json({success:false, err})
     return res.status(200).json({success:true})
   })
+
+  console.log(req.body)
 })
 
 app.post('/api/product/image', (req, res)=>{
-  const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-      cb(null, 'uploads')
-    },
-    filename: function (req, file, cb) {
-      cb(null,`${Date.now()}_${file.originalname}`)
-    }
-  })
-  
-  const upload = multer({ storage: storage }).single("file")
+  cloudinary.config({
+    cloud_name: confing.cloudName,
+    api_key: confing.apiKey,
+    api_secret: confing.apiSecret
+  });
 
-  //가져온 이미지를 저장을 해주면 된다.
+  const storage = new CloudinaryStorage({
+    cloudinary: cloudinary,
+    params: {
+      folder: "MAIN",
+    },
+  });
+  
+  const upload = multer({ storage: storage }).array("file")
+
   upload(req, res, err =>{
     if(err) {
       return res.json({success: false, err})
     }
-
-    return res.json({success:true, filePath:res.req.file.destination, file:res.req.file.filename})
+      return res.json({success:true, file:res.req.files})
   })
 })
 
-app.post('/api/product/image/delete', (req, res)=>{
-  const test = req.body.imageName
-  fs.readdir('./uploads')
-  .then((dir)=>{
-    console.log('폴더내용확인', dir)
-    return fs.unlink(`./${test}`)
+app.post('/api/product/modify_by_id', (req, res)=>{
+  let type = req.query.type
+  let productId = req.query.id
+
+  Product.findOneAndUpdate(
+    { _id: productId},
+    { title:req.body.title,
+      description:req.body.description,
+      price:req.body.price,
+      images:req.body.images,
+      continents:req.body.continents},
+    { new: true },
+    (err, productinfo) => {
+      if (err) return res.status(200).json({ success: false, err })
+      res.status(200).send({success:true, productinfo})
+    }
+  )
+})
+
+app.post('/api/product/image/delete', (req, res) => {
+  cloudinary.config({
+    cloud_name: confing.cloudName,
+    api_key: confing.apiKey,
+    api_secret: confing.apiSecret
+  });
+  
+  let deleteImg = req.body
+  deleteImg.forEach((item) => {
+    cloudinary.uploader.destroy(item.public_id, function(error,result) {
+      console.log(result, error) });
   })
+})
+
+app.get('/api/product/delete_id', (req, res)=>{
+  let productId = req.query.id
+
+  Product.findOneAndDelete(
+    { _id: productId},
+    { new: true },
+    (err) => {
+      if (err) return res.status(200).json({ success: false, err })
+      res.status(200).send({success:true})
+    }
+  )
 })
 
 app.post('/api/product/products',(req,res)=>{
   //product collection에 들어있는 모든 상품 정보를 가져오기
   let limit = req.body.limit ? parseInt(req.body.limit) : 20;
   let skip = req.body.skip ? parseInt(req.body.skip) : 0;
+  let term = req.body.searchTerm 
 
-  Product.find()
+  let findArg = {};
+
+  for(let key in req.body.filters){
+    if(req.body.filters[key].length > 0){
+
+      // console.log('key', key)
+
+      if(key === "price"){
+        findArg[key] = {
+          //Greater than equal
+          $gte: req.body.filters[key][0],
+          //Less than equal
+          $lte: req.body.filters[key][1]
+        }
+      }else{
+        findArg[key] =req.body.filters[key];
+      } 
+    }
+  }
+
+  // console.log('findArgs', findArg)
+
+  if(term){
+    Product.find(findArg)
+    .find({ title: new RegExp(term)})
+      .populate("writer")
+      .skip(skip)
+      .limit(limit)
+      .exec((err, productInfo) => {
+        if (err) return res.status(400).json({ success: false, err })
+        return res.status(200).json({ success: true, productInfo, postSize: productInfo.length })
+      })
+  } else {
+    Product.find(findArg)
+      .populate("writer")
+      .skip(skip)
+      .limit(limit)
+      .exec((err, productInfo) => {
+        if (err) return res.status(400).json({ success: false, err })
+        return res.status(200).json({ success: true, productInfo, postSize: productInfo.length })
+      })
+  }
+})
+
+app.get('/api/product/products_by_id', (req, res)=>{
+  let type = req.query.type
+  let productId = req.query.id
+
+  if(type === "array"){
+    //id=12321,1223321,233242이거를
+    //productsId = ['12321','1223321','233242'] 이런식으로 바꿔주기
+    let ids = req.query.id.split(',')
+    productId = ids.map(item =>{
+      return item
+    })
+  }
+
+  Product.find({_id : {$in: productId}})
   .populate("writer")
-  .skip(skip)
-  .limit(limit)
-  .exec((err, productInfo) => {
-    if(err) return res.status(400).json({success:false, err})
-    return res.status(200).json({success:true, productInfo, postSize:productInfo.length})
+  .exec((err,product) =>{
+    if(err) return res.status(400).send(err)
+    return res.status(200).send(product)
   })
 })
+
+app.post('/api/users/addToCart', auth, (req, res) => {
+  // 먼저 User Collection에 해당 유저의 정보를 가져오기
+
+  let duplicate = false;
+
+  User.findOne({ _id: req.user._id },
+    (err, userInfo) => {
+      userInfo.cart.forEach((item) => {
+        if (item.id === req.body.productId) {
+          duplicate = true;
+        }
+      })
+
+      //상품이 이미 있을때
+      if (duplicate) {
+        User.findOneAndUpdate(
+          { _id: req.user._id, "cart.id": req.body.productId },
+          { $inc: { "cart.$.quantity": 1 } },
+          { new: true },
+          (err, userInfo) => {
+            if (err) return res.status(200).json({ success: false, err })
+            res.status(200).send(userInfo.cart)
+          }
+        )
+      } else {
+        //상품이 이미 있지 않을때
+        User.findOneAndUpdate(
+          { _id: req.user._id },
+          {
+            $push: {
+              cart: {
+                id: req.body.productId,
+                quantity: 1,
+                date: Date.now()
+              }
+            }
+          },
+          { new: true },
+          (err, userInfo) => {
+            if (err) return res.status(400).json({ success: false, err })
+            res.status(200).send(userInfo.cart)
+          }
+        )
+      }
+
+    })
+  //가져온 정보에서 카트에다 넣으려하는 상품이 이미 들어있는지 확인
+
+
+})
+
+app.get('/api/users/removeCart', auth, (req, res) => {
+  //먼저 cart안에 내가 지우려고 한 상품을 지워주기 
+  User.findOneAndUpdate(
+    { _id: req.user._id },
+    {
+      "$pull":
+        { "cart": { "id": req.query.id } }
+    },
+    { new: true },
+    (err, userInfo) => {
+      let cart = userInfo.cart;
+      let array = cart.map(item => {
+        return item.id
+      })
+      // console.log(array)
+      //product collection에서  현재 남아있는 상품들의 정보를 가져오기 
+
+      //productIds = ['5e8961794be6d81ce2b94752', '5e8960d721e2ca1cb3e30de4'] 이런식으로 바꿔주기
+      Product.find({ _id: { $in: array } })
+        .populate('writer')
+        .exec((err, productInfo) => {
+          return res.status(200).json({
+            productInfo,
+            cart
+          })
+        })
+    }
+  )
+})
+
+if (process.env.NODE_ENV === "production") {
+
+  // Set static folder
+  app.use(express.static("client/build"));
+
+  // index.html for all page routes
+  app.get("*", (req, res) => {
+    res.sendFile(path.resolve(__dirname, "../client", "build", "index.html"));
+  });
+}
+
 
 app.listen(port, () => {
     console.log(`Example app listening at http://localhost:${port}`)
   })
+

@@ -4,6 +4,8 @@ import { Link } from "react-router-dom"
 import {useState} from 'react'
 import { useDispatch } from 'react-redux';
 import { loginUser } from '../../../_action/user_action';
+import {Button} from 'react-bootstrap';
+import 'bootstrap/dist/css/bootstrap.min.css';
 
 function LoginPage() {
     const dispatch = useDispatch();
@@ -52,9 +54,9 @@ function LoginPage() {
                 <input type="password" value={Password} onChange={onPasswordHandler} />
                 <p><Link to={"/register"}>register now</Link></p>
                 <br />
-                <button type="submit">
+                <Button type='submit' style={{display:"block"}} variant="outline-secondary">
                     Login
-                </button>
+                </Button>
             </form>
         </div>
     )

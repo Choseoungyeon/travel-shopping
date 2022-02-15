@@ -21,11 +21,31 @@
 .NavRight ul{
     display: flex;
     justify-content: space-between;
+    margin-bottom: 0px;
+}
+
+.userCart{
+    position: relative;
+}
+
+.userCart span{
+    background-color: rgb(255, 42, 42);
+    width:20px;
+    height: 20px;
+    position: absolute;
+    right: -15px;
+    top: -10px;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 20px;
+    color:#fff;
+    font-size: 12px;
 }
 
 .NavRight li{
     text-transform: capitalize;
     padding: 0px 20px;
     font-size: 15px;
+    line-height: 25px;
     cursor: pointer;
 }

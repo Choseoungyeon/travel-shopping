@@ -2,43 +2,51 @@ import React from 'react'
 import Dropzone from 'react-dropzone'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faPlus } from '@fortawesome/free-solid-svg-icons'
-import axios from 'axios'
 import {useState} from 'react'
 
 function FileUpload(props) {
     
-    const [Images, setImages] = useState([]);
+  const [Attachment, setAttachment] = useState([]);
+  const [Files, setFiles] = useState([]);
 
-    const dropHandler = (files)=>{
-        let formData = new FormData();
+  const dropHandler = (files) => {
+    const reader = new FileReader();
+    reader.onloadend = (finishedEvent) =>{
+      const {
+        currentTarget:{result},
+      } = finishedEvent
+      setAttachment(current => [...current, result])
+    }
+    reader.readAsDataURL(files[0])
 
-        const config = {
-            header:{'content-type':'multipart/fomr-data'}
+
+    setFiles(current => [...current, files[0]])
+    props.refreshFunction(current => [...current, files[0]])
+  }
+
+  const deleteHandler=(im)=>{
+    const currentIndex = Attachment.indexOf(im)
+    let newAttachment = [...Attachment]
+    newAttachment.splice(currentIndex,1)
+    setAttachment(newAttachment)
+
+    Files.forEach((file)=>{
+      const reader = new FileReader();
+      reader.onloadend = (finishedEvent) => {
+        const {
+          currentTarget: { result },
+        } = finishedEvent
+        if(im===result){
+          const currentFile = Files.indexOf(file)
+          let newFile = [...Files]
+          newFile.splice(currentFile,1)
+          setFiles(newFile);
+          props.refreshFunction(newFile);
         }
-
-        formData.append("file", files[0])
-
-        axios.post('/api/product/image', formData, config )
-        .then(response => {
-            if(response.data.success){
-                setImages([...Images, `${response.data.filePath}/${response.data.file}`])
-                props.refreshFunction([...Images, `${response.data.filePath}/${response.data.file}`])
-            }else{
-                alert('파일을 저장하는데 실패했습니다')
-            }
-        })   
-    }
-
-    const deleteHandler = (image) =>{
-        const currentIndex = Images.indexOf(image)
-        let newImages = [...Images]
-        newImages.splice(currentIndex,1)
-        setImages(newImages)
-        props.refreshFunction(newImages)
-
-        let target ={imageName: Images[currentIndex]} 
-        axios.post('/api/product/image/delete', target).then(response => console.log(response.data))
-    }
+      }
+      reader.readAsDataURL(file)
+    })
+  }
 
     return (
         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -53,9 +61,9 @@ function FileUpload(props) {
                 )}
             </Dropzone>
             <div style={{display:'flex', width:"350px", height:"240px", overflowX:'scroll', overflowY:'hidden'}}>
-                    {Images.map((image, index) => (
+                    {Attachment.map((image, index) => (
                         <div onClick={()=> deleteHandler(image)} key={index}>
-                            <img style={{minWidth:'300px', width:'300px', height:'240px'}}src={`http://localhost:5000/${image}`}/>
+                            <img style={{minWidth:'300px', width:'300px', height:'240px'}}src={image}/>
                         </div>
                     ))}
             </div>

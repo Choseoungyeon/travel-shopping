@@ -3,6 +3,8 @@ import React from 'react'
 import {useState} from 'react'
 import { useDispatch } from 'react-redux';
 import { registerUser} from '../../../_action/user_action';
+import {Button} from 'react-bootstrap';
+import 'bootstrap/dist/css/bootstrap.min.css';
 
 function RegisterPage() {
     const dispatch = useDispatch();
@@ -55,7 +57,7 @@ function RegisterPage() {
     return (
         <div style={{
             display: 'flex', justifyContent: 'center', alignItems: 'center'
-            , width: '100%', height: 'calc(100vh - 70px)'
+            , width: '100%', height: 'calc(100vh - 70px)', maxWidth:'500px', margin:'0 auto'
         }}>
             <form style={{ display: 'flex', flexDirection: 'column' }}
                 onSubmit={onSubmitHandler}
@@ -69,9 +71,9 @@ function RegisterPage() {
                 <label>Password confirm</label>
                 <input type="password" value={ConfirmPassword} onChange={onConfirmPasswordHandler} />
                 <br />
-                <button type="submit">
+                <Button type='submit' style={{display:"block"}} variant="outline-secondary">
                     회원가입
-                </button>
+                </Button>
             </form>
         </div>
     )
