@@ -1,6 +1,7 @@
 const express = require('express')
 const app = express()
 const port = process.env.PORT || 5000
+const cors = require('cors')
 const bodyParser = require('body-parser')
 const cookieParser = require('cookie-parser')
 const {User} = require("./models/User")
@@ -17,6 +18,7 @@ app.use(bodyParser.urlencoded({extended:true}));
 app.use(bodyParser.json())
 app.use(cookieParser())
 app.use('/uploads', express.static('uploads'));
+app.use(cors())
 
 const mongoose = require('mongoose')
 mongoose.connect(confing.mongoURI).then(()=>console.log('MongoDB Connected....'))
@@ -329,16 +331,15 @@ app.get('/api/users/removeCart', auth, (req, res) => {
   )
 })
 
+// Serve static assets if in production
 if (process.env.NODE_ENV === "production") {
 
-  const root =require('path').join(__dirname, "../client", "build")
-
   // Set static folder
-  app.use(express.static(root));
+  app.use(express.static("client/build"));
 
   // index.html for all page routes
   app.get("*", (req, res) => {
-    res.sendFile('index.html',{root});
+    res.sendFile(path.resolve(__dirname, "../client", "build", "index.html"));
   });
 }
 
