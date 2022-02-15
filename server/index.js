@@ -336,13 +336,11 @@ app.get('/api/users/removeCart', auth, (req, res) => {
 // Serve static assets if in production
 if (process.env.NODE_ENV === "production") {
 
-  // Set static folder
-  app.use(express.static("client/build"));
-
-  // index.html for all page routes
-  app.get("*", (req, res) => {
-    res.sendFile(path.resolve(__dirname, "../client", "build", "index.html"));
-  });
+  const root = require('path').join(__dirname, 'client', 'build')
+app.use(express.static(root));
+app.get("*", (req, res) => {
+    res.sendFile('index.html', { root });
+})
 }
 
 
