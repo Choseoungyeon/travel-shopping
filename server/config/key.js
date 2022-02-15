@@ -1,5 +1,5 @@
 if(process.env.NODE_ENV === 'prduction') {
-    module.exports =require('./prod')
+    module.exports =require('./pod')
 }else{
     module.exports=require('./dev')
 }

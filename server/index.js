@@ -10,7 +10,7 @@ const cloudinary = require("cloudinary").v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const multer = require('multer');
 
-const confing = require("./config/dev")
+const confing = require("./config/key")
 
 
 app.use(bodyParser.urlencoded({extended:true}));
