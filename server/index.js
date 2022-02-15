@@ -21,9 +21,10 @@ app.use(cookieParser())
 app.use('/uploads', express.static('uploads'));
 app.use(cors())
 
-const mongoose = require('mongoose')
-mongoose.connect(confing.mongoURI, { useNewUrlParser: true, useUnifiedTopology: true }).then(()=>console.log('MongoDB Connected....'))
-  .catch(err => console.log(err))
+const mongoose = require("mongoose");
+const connect = mongoose.connect(confing.mongoURI, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => console.log('MongoDB Connected...'))
+  .catch(err => console.log(err));
 
 // respond with "hello world" when a GET request is made to the homepage
 app.get('/', function (req, res) {
