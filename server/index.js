@@ -334,12 +334,14 @@ app.get('/api/users/removeCart', auth, (req, res) => {
 })
 
 if (process.env.NODE_ENV === "production") {
-  app.use(express.static(path.join(__dirname, "client/build")));
-}
-
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "client/build", "index.html"));
-});
+  //"client/build"는 react의 build파일 경로이다
+    app.use(express.static("client/build"));
+  
+  //"..client"는 react 프로젝트의 파일 경로, "build"는 react프로젝트 내의 build폴더이다
+    app.get("*", (req, res) => {
+      res.sendFile(path.resolve(__dirname, "../client", "build", "index.html"));
+    });
+  }
 
 
 app.listen(port, () => {
